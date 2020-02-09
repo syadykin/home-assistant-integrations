@@ -1,0 +1,16 @@
+[Unit]
+Description=home-assistant-integrations
+Requires=network.target
+
+[Service]
+Type=simple
+User=syadykin
+Group=syadykin
+WorkingDirectory=/var/lib/home-assistant-integrations
+ExecStart=/bin/bash -lc '/usr/bin/nodejs /var/lib/home-assistant-integrations/modbus/index.js'
+TimeoutSec=30
+RestartSec=2s
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
