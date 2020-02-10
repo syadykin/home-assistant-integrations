@@ -35,12 +35,15 @@ class Switch extends Thing {
     this.core.modbus.setID(this.id);
     const coils = (await this.core.modbus.readCoils(0, this.coils.length)).data;
     for (let id = 0; id < coils.length; id++) {
-      if (this.coils[id] !== coils[id]) {
+      if (this.initial || this.coils[id] !== coils[id]) {
         const topic = [Thing.prefix, this.id, Switch.name, id].join("/");
         const state = coils[id] && Thing.ON || Thing.OFF;
         this.coils[id] = coils[id];
         this.core.mqtt.publish(topic, state, { retain: Thing.retain });
       }
+    }
+    if (this.initial) {
+      this.initial = false;
     }
   }, 0);
 }

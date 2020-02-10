@@ -96,22 +96,26 @@ class LED extends Thing {
       const prevState = this.state & mask;
       const currState = state & mask;
 
-      if (prevState !== currState) {
+      if (this.initial || prevState !== currState) {
         const topic = [Thing.prefix, this.id, Switch.name, id].join("/");
         this.core.mqtt.publish(topic, currState && Thing.ON || Thing.OFF, { retain: Thing.retain });
       }
 
-      if (this.current[id] !== current) {
+      if (this.initial || this.current[id] !== current) {
         this.current[id] = current;
         const topic = [Thing.prefix, this.id, LED.name, id, "current", "get"].join("/");
         this.core.mqtt.publish(topic, current.toString(), { retain: Thing.retain });
       }
 
-      if (this.preset[id] !== preset) {
+      if (this.initial || this.preset[id] !== preset) {
         this.preset[id] = preset;
         const topic = [Thing.prefix, this.id, LED.name, id, "preset", "get"].join("/");
         this.core.mqtt.publish(topic, preset.toString(), { retain: Thing.retain });
       }
+    }
+
+    if (this.initial) {
+      this.initial = false;
     }
 
     this.state = state;

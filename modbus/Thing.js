@@ -6,6 +6,7 @@ class Thing {
 
   core;
   id;
+  initial = true;
 
   constructor(core, id) {
     this.core = core;
