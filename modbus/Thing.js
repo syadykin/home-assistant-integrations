@@ -2,7 +2,7 @@ class Thing {
   static get prefix() { return "modbus" };
   static get ON() { return "ON" };
   static get OFF() { return "OFF" };
-  static get retain() { return false };
+  static get retain() { return true };
 
   core;
   id;
