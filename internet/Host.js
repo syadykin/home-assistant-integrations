@@ -10,8 +10,7 @@ class Host {
 
     const payload = JSON.stringify({
       "~": this._prefix,
-      name: `internet_${this._config.name}`,
-      title: this._config.title || this._config.name,
+      name: this._config.name,
       cmd_t: "~/set",
       stat_t: "~/state",
     });
