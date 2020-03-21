@@ -6,7 +6,7 @@ class Host {
     this._config = config;
     this._mqtt = mqtt;
     this._file = join(this._config.folder, this._config.ip);
-    this._prefix = `${this._config.prefix}/${this._config.ip}`;
+    this._prefix = `${this._config.prefix}/${this._config.ip.replace(/\./g, '-')}`;
 
     const payload = JSON.stringify({
       "~": this._prefix,
