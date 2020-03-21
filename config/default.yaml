@@ -1,0 +1,39 @@
+mqtt:
+  url: mqtt://localhost
+  prefix: homeassistant
+
+modbus:
+  enabled: false
+  delay: 300
+  timeout: 300
+  host: "10.42.0.2"
+  port: 9761
+  devices:
+    - type: switch
+      id: 2
+      options:
+        controls: 8
+    - type: switch
+      id: 3
+      options:
+        controls: 8
+    # - type: led
+    #   id: 4
+    #   options:
+    #     controls: 2
+    # - type: led
+    #   id: 5
+    #   options:
+    #     controls: 2
+
+internet:
+  enabled: true
+  # folder: /srv/data/internet
+  status: /tmp/ip
+  hosts:
+    - ip: 192.168.42.2
+      name: nas
+      title: NAS
+    - ip: 192.168.42.83
+      name: phone_yehor
+      title: Телефон Егора

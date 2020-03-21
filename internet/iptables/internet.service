@@ -1,0 +1,16 @@
+[Unit]
+Description=internet toggler
+Requires=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/srv/internet
+ExecStart=/srv/build/internet/iptables/watch
+TimeoutSec=30
+RestartSec=2s
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

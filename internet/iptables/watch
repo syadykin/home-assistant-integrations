@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+iptables=/usr/sbin/iptables
+inotifywait=/usr/bin/inotifywait
+
+root=$(pwd)
+
+interface=$1
+folder=$2
+
+if [ -z "$folder" ] && [ -n "$interface" ] && [ -d "$interface" ]; then
+  folder="$interface"
+  interface=""
+elif [ -z "$folder" ]; then
+  folder=$root
+fi
+
+if [ -z "$interface" ]; then
+  interface=$(ip ro list default | awk '{print $5}')
+fi
+
+help() {
+  echo "Usage: $0 [iface] [folder]"
+  echo "  iface:    output interface, defaults to gateway interface"
+  echo "  folder:   folder where IP files are stored, defaults"
+  echo "            to current directory"
+}
+
+append() {
+  ip=$1
+  $iptables -t nat -A POSTROUTING -o $interface -j MASQUERADE -s $ip 2>/dev/null
+  echo $ip on
+}
+
+delete() {
+  ip=$1
+  $iptables -t nat -D POSTROUTING -o $interface -j MASQUERADE -s $ip 2>/dev/null
+  echo $ip off
+}
+
+apply() {
+  file="$1"
+  ip=$(basename "$file")
+
+  $iptables -t nat -C POSTROUTING -o $interface -j MASQUERADE -s $ip 2>/dev/null
+  present=$?
+
+  if [ -e "$file" ] && [ $present = "1" ]; then
+    append $ip
+  elif [ ! -e "$file" ] && [ $present = "0" ]; then
+    delete $ip
+  fi
+}
+
+for file in $folder/*; do
+  [ -f "$file" ] && apply "$file"
+done
+
+$inotifywait -q -m -e create -e delete "$folder"  | while read spec
+do
+  IFS=' ' read dir action ip <<< "$spec"
+  apply "$dir$ip"
+done
