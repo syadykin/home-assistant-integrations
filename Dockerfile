@@ -12,4 +12,4 @@ RUN apk --no-cache --virtual .deps add python make g++ linux-headers && \
 
 COPY . /app
 
-WORKDIR /app/modbus
+WORKDIR /app
