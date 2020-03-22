@@ -9,10 +9,15 @@ class Host {
     this._prefix = `${this._config.prefix}/${this._config.ip.replace(/\./g, '-')}`;
 
     const payload = JSON.stringify({
-      "~": this._prefix,
+      '~': this._prefix,
       name: this._config.name,
-      cmd_t: "~/set",
-      stat_t: "~/state",
+      cmd_t: '~/set',
+      stat_t: '~/state',
+      uniq_id: this._config.name,
+      device: {
+        name: 'Internet toggler',
+        identifiers: [ 'internet-v1.0' ],
+      },
     });
 
     this._mqtt.publish(`${this._prefix}/config`, payload, { retain: true });
