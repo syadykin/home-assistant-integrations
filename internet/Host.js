@@ -37,7 +37,7 @@ class Host {
     });
   }
 
-  enable = () => _mqtt.publish(`${this._prefix}/state`, 'ON', { retain: true });
+  enable = () => this._mqtt.publish(`${this._prefix}/state`, 'ON', { retain: true });
 
   disable = () => this._mqtt.publish( `${this._prefix}/state`, 'OFF', { retain: true });
 }

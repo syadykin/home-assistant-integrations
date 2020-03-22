@@ -28,8 +28,8 @@ class Core {
       );
     }
 
-    watch(this._config.status).on('change', async (_, ip) => {
-      if (!this.hosts[ip]) {
+    watch(this._config.status).on('change', async (event, ip) => {
+      if (event !== 'rename' || !this.hosts[ip]) {
         return;
       }
 
