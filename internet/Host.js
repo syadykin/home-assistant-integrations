@@ -19,6 +19,7 @@ class Host {
         manufacturer: 'Stanyslav Yadykin',
         model: 'v1.0',
         identifiers: [ 'internet-toggler' ],
+        unique_id: 'internet-toggler',
       },
     });
 
