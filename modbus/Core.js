@@ -19,12 +19,17 @@ module.exports = class Core {
     this._modbus.setTimeout(2000);
 
     this._devices = config.devices.map((device) => {
+      const options = {
+        ...(device.options),
+        prefix: this._config.prefix,
+      }
+
       switch (device.type) {
         case "switch": {
-          return new Switch(this, device.id, device.options);
+          return new Switch(this, device.id, options);
         }
         case "led": {
-          return new LED(this, device.id, device.options);
+          return new LED(this, device.id, options);
         }
 
         default: throw new Error(`Unknown device found: ${JSON.stringify(device)}`);

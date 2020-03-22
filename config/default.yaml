@@ -3,32 +3,49 @@ mqtt:
   prefix: homeassistant
 
 modbus:
-  enabled: false
+  enabled: true
   delay: 300
   timeout: 300
   host: "10.42.0.2"
   port: 9761
   devices:
-    - type: switch
-      id: 2
-      options:
-        controls: 8
-    - type: switch
-      id: 3
-      options:
-        controls: 8
-    # - type: led
-    #   id: 4
+    # - type: switch
+    #   id: 2
     #   options:
-    #     controls: 2
+    #     controls:
+    #       - storage_room_top
+    #       - bath_room_2_top
+    #       - sofias_room_top
+    #       - parents_room_top
+    #       - yehors_room_top
+    #       - bath_room_2_fan
+    #       - bath_room_2_mirror
+    #       # - empty
+    # - type: switch
+    #   id: 3
+    #   options:
+    #     controls:
+    #       - kitchen_top
+    #       - balcony_top
+    #       - living_room_top
+    #       - cabinet_top
+    #       - hall_1_top
+    #       - bath_room_1_top
+    #       - bath_room_1_fan
+    - type: led
+      id: 4
+      options:
+        controls:
+          - hall_2_top_main
+          - hall_2_top_backlight
     # - type: led
     #   id: 5
     #   options:
-    #     controls: 2
+    #     controls:
+    #       - hall_1_stairs
 
 internet:
-  enabled: true
-  # folder: /srv/data/internet
+  enabled: false
   status: /tmp/ip
   hosts:
     - ip: 192.168.42.2

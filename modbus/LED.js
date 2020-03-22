@@ -1,124 +1,147 @@
-const { defaults } = require("lodash");
-const Thing = require("./Thing");
-const Switch = require("./Switch");
+const { defaults } = require('lodash');
 
-class LED extends Thing {
-  static name = "led";
-
-  options;
-  state;
-  current;
-  preset;
-
+class LED {
   constructor(core, id, options) {
-    super(core, id);
-    this.options = defaults({ controls: 2 }, options);
+    this._core = core;
+    this._id = id;
+    this._options = defaults({}, options, { controls: [] });
 
-    this.state = 0;
-    this.current = new Array(this.options.controls).fill(0);
-    this.preset = new Array(this.options.controls).fill(0);
+    this._prefix = `${this._options.prefix}/light/modbus-${this._id}`;
 
-    const switchTopic = [Thing.prefix, this.id, Switch.name, "+"].join("/");
-    this.core.mqtt.subscribe(switchTopic);
-    const ledTopic = [Thing.prefix, this.id, LED.name, "#",].join("/");
-    this.core.mqtt.subscribe(ledTopic);
+    this._state = 0;
+    this._current = new Array(this._options.controls.length).fill(0);
+    this._preset = new Array(this._options.controls.length).fill(0);
 
-    const re = new RegExp(`^${Thing.prefix}/${this.id}/(${Switch.name}|${LED.name})/(\\d+)(?:/(current|preset)/set)?$`);
 
-    const getState = (id) => this.state & (1 << id) && true || false;
+    this._options.controls.forEach((name, idx) => {
+      this._core.mqtt.publish(
+        `${this._prefix}/${idx}/config`,
+        JSON.stringify({
+          '~': `${this._prefix}/${idx}`,
+          name: name,
+          cmd_t: '~/onoff/set',
+          stat_t: '~/onoff/state',
+          bri_cmd_t: '~/brightness/set',
+          bri_stat_t: '~/brightness/state',
+          unique_id: `modbus-${this._id}-${idx}`,
+          device: {
+            name: `VRC-L2 (id: ${this._id})`,
+            manufacturer: 'VKmodule',
+            model: 'VRC-L2',
+            identifiers: [ 'vkmodule', 'modbus', this._id ],
+          },
+        }),
+        { retain: true },
+      );
+    });
+
+    this._core.mqtt.subscribe(`${this._prefix}/+/+/set`);
+
+    const re = new RegExp(`^${this._prefix}/(\\d+)/(onoff|brightness)/set$`);
+
+    const getState = (id) => this._state & (1 << id) && true || false;
 
     const setState = (id, state) => {
       if (getState(id) !== state) {
-        const address = this.options.controls + 2;
+        const address = this._options.controls.length + 2;
         const mask = 1 << id;
-        const value = state ? (this.state | mask) : (this.state & (0xffff ^ mask));
-        this.core.schedule(async() => {
-          this.core.modbus.setID(this.id);
-          await this.core.modbus.writeRegister(address, value);
+        const value = state ? (this._state | mask) : (this._state & (0xffff ^ mask));
+        this._core.schedule(async() => {
+          this._core.modbus.setID(this._id);
+          await this._core.modbus.writeRegister(address, value);
         }, 1);
       }
     }
 
-    this.core.mqtt.on("message", (topic, packet) => {
+    this._core.mqtt.on('message', (topic, packet) => {
       const match = topic.match(re);
 
       if (match) {
-        const id = parseInt(match[2], 10);
-        const command = match[3] || (match[1] === Switch.name && "state");
+        const idx = parseInt(match[1], 10);
+        const command = match[2];
         const payload = packet.toString();
 
         switch (command) {
-          case "state": {
-            setState(id, payload === Thing.ON)
+          case 'onoff': {
+            setState(idx, payload === 'ON')
             break;
           }
 
-          case "current": {
+          case 'brightness': {
             const current = parseInt(payload, 10);
-            if (this.current[id] !== current) {
-              const address = id + 1;
-              const value = (this.preset[id] << 8) + current;
-              this.core.schedule(async() => {
-                this.core.modbus.setID(this.id);
-                await this.core.modbus.writeRegister(address, value);
+            if (this._current[idx] !== current) {
+              const address = idx + 1;
+              const value = (this._preset[idx] << 8) + current;
+              this._core.schedule(async() => {
+                this._core.modbus.setID(this._id);
+                await this._core.modbus.writeRegister(address, value);
               }, 1)
             }
             break;
           }
 
-          case "preset": {
-            const preset = parseInt(payload, 10);
-            if (this.preset[id] !== preset) {
-              const address = id + 1;
-              const value = (preset << 8) + this.current[id];
-              this.core.schedule(async() => {
-                this.core.modbus.setID(this.id);
-                await this.core.modbus.writeRegister(address, value);
-              }, 1)
-            }
-            break;
-          }
+          // TBC
+          // case 'preset': {
+          //   const preset = parseInt(payload, 10);
+          //   if (this._preset[idx] !== preset) {
+          //     const address = idx + 1;
+          //     const value = (preset << 8) + this._current[idx];
+          //     this._core.schedule(async() => {
+          //       this._core.modbus.setID(this._id);
+          //       await this._core.modbus.writeRegister(address, value);
+          //     }, 1)
+          //   }
+          //   break;
+          // }
         }
       }
     });
   }
 
-  read = () => this.core.schedule(async () => {
-    this.core.modbus.setID(this.id);
-    const registers = (await this.core.modbus.readHoldingRegisters(1, this.options.controls + 2)).data;
-    const state = registers[this.options.controls + 1];
+  read = () => this._core.schedule(async () => {
+    this._core.modbus.setID(this._id);
+    const registers = (await this._core.modbus.readHoldingRegisters(1, this._options.controls.length + 2)).data;
+    const state = registers[this._options.controls.length + 1];
 
-    for (let id = 0; id < this.options.controls; id ++) {
-      const current = registers[id] & 0xff;
-      const preset = (registers[id] & 0xff00) >> 8;
-      const mask = 1 << id;
+    for (let idx = 0; idx < this._options.controls.length; idx ++) {
+      const current = registers[idx] & 0xff;
+      const mask = 1 << idx;
 
-      const prevState = this.state & mask;
+      const prevState = this._state & mask;
       const currState = state & mask;
 
       if (this.initial || prevState !== currState) {
-        const topic = [Thing.prefix, this.id, Switch.name, id].join("/");
-        this.core.mqtt.publish(topic, currState && Thing.ON || Thing.OFF, { retain: Thing.retain });
+        console.log('states', prevState, currState);
+
+        this._core.mqtt.publish(
+          `${this._prefix}/${idx}/onoff/state`,
+          currState && 'ON' || 'OFF',
+          { retain: true },
+        );
       }
 
-      if (this.initial || this.current[id] !== current) {
-        this.current[id] = current;
-        const topic = [Thing.prefix, this.id, LED.name, id, "current", "get"].join("/");
-        this.core.mqtt.publish(topic, current.toString(), { retain: Thing.retain });
+      if (this.initial || this._current[idx] !== current) {
+        this._current[idx] = current;
+        this._core.mqtt.publish(
+          `${this._prefix}/${idx}/brightness/state`,
+          current.toString(),
+          { retain: true },
+        );
       }
 
-      if (this.initial || this.preset[id] !== preset) {
-        this.preset[id] = preset;
-        const topic = [Thing.prefix, this.id, LED.name, id, "preset", "get"].join("/");
-        this.core.mqtt.publish(topic, preset.toString(), { retain: Thing.retain });
-      }
+      // const preset = (registers[idx] & 0xff00) >> 8;
+      // if (this.initial || this._preset[idx] !== preset) {
+      //   this._preset[idx] = preset;
+      //   const topic = [Thing.prefix, this._id, LED.name, idx, 'preset', 'get'].join('/');
+      //   this._core.mqtt.publish(topic, preset.toString(), { retain: Thing.retain });
+      // }
     }
 
     if (this.initial) {
       this.initial = false;
     }
 
-    this.state = state;
+    this._state = state;
   }, 0);
 }
 
