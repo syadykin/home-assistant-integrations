@@ -111,8 +111,6 @@ class LED {
       const currState = state & mask;
 
       if (this.initial || prevState !== currState) {
-        console.log('states', prevState, currState);
-
         this._core.mqtt.publish(
           `${this._prefix}/${idx}/onoff/state`,
           currState && 'ON' || 'OFF',
