@@ -13,10 +13,12 @@ class Host {
       name: this._config.name,
       cmd_t: '~/set',
       stat_t: '~/state',
-      uniq_id: this._config.name,
+      unique_id: `internet-${this._config.ip}`,
       device: {
         name: 'Internet toggler',
-        identifiers: [ 'internet-v1.0' ],
+        manufacturer: 'Stanyslav Yadykin',
+        model: 'v1.0',
+        identifiers: [ 'internet-toggler' ],
       },
     });
 
