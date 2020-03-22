@@ -5,6 +5,8 @@ const Modbus = require('./modbus/Core');
 const Internet = require('./internet/Core');
 
 const run = async () => {
+  process.setMaxListeners(0);
+
   const options = config.get('mqtt');
   const mqtt = Mqtt.connect(options.url);
 
