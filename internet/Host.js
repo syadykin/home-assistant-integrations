@@ -22,26 +22,37 @@ class Host {
       },
     });
 
+    // ladies^Wstate first
+    if (await this.test()) {
+      this.enable();
+    } else {
+      this.disable();
+    }
+
     this._mqtt.publish(`${this._prefix}/config`, payload, { retain: true });
 
     this._mqtt.on('message', async (topic, packet) => {
       if (topic === `${this._prefix}/set`) {
         if (packet.toString() === 'ON') {
-          try {
-            await fs.access(this._file);
-          } catch (e) {
+          if (!await this.test()) {
             await (await fs.open(this._file, 'w')).close();
           }
         } else {
-          try {
-            await fs.access(this._file);
+          if (await this.test()) {
             await fs.unlink(this._file);
-          } catch (e) {
-            // nothing
           }
         }
       }
     });
+  }
+
+  test = async () => {
+    try {
+      await fs.access(this._file);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   enable = () => this._mqtt.publish(`${this._prefix}/state`, 'ON', { retain: true });
