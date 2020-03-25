@@ -7,7 +7,9 @@ class Host {
     this._mqtt = mqtt;
     this._file = join(this._config.folder, this._config.ip);
     this._prefix = `${this._config.prefix}/${this._config.ip.replace(/\./g, '-')}`;
+  }
 
+  run = async () => {
     const payload = JSON.stringify({
       '~': this._prefix,
       name: this._config.name,

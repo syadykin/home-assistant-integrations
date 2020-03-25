@@ -26,6 +26,8 @@ class Core {
         },
         this._mqtt,
       );
+
+      await this.hosts[host.ip].run();
     }
 
     watch(this._config.status).on('change', async (event, ip) => {
