@@ -8,29 +8,39 @@ const run = async () => {
   const options = config.get('mqtt');
   const mqtt = Mqtt.connect(options.url);
 
-  const modbus = new Modbus(
-    {
-      ...config.get('modbus'),
-      prefix: options.prefix,
-    },
-    mqtt,
-  );
-  const internet = new Internet(
-    {
-      ...config.get('internet'),
-      prefix: options.prefix,
-    },
-    mqtt,
-  );
+  const services = [];
 
-  try {
-    await Promise.all([
-      modbus.run(),
-      internet.run(),
-    ]);
-  } catch (e) {
-    console.log('RUN error:', e);
-    process.exit(1);
+  const modbusConfig = config.get('modbus');
+  if (modbusConfig.enabled !== false) {
+    services.push(new Modbus(
+      {
+        ...modbusConfig,
+        prefix: options.prefix,
+      },
+      mqtt,
+    ));
+  }
+
+  const internetConfig = config.get('internet');
+  if (internetConfig.enabled !== false) {
+    services.push(new Internet(
+      {
+        ...internetConfig,
+        prefix: options.prefix,
+      },
+      mqtt,
+    ));
+  }
+
+  if (services.length !== 0) {
+    try {
+      await Promise.all(
+        services.map((service) => service.run()),
+      );
+    } catch (e) {
+      console.log('RUN error:', e);
+      process.exit(1);
+    }
   }
 };
 

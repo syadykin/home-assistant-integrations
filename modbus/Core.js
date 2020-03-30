@@ -54,7 +54,7 @@ module.exports = class Core {
       }
       await func();
     } catch (e) {
-      console.error('Worker error:', e);
+      console.error('Worker error:', e.message);
     }
   }
 
@@ -77,8 +77,6 @@ module.exports = class Core {
   }
 
   run = async() => {
-    if (this._config.enabled !== false) {
-      this.fulfillQueue();
-    }
+    this.fulfillQueue();
   }
 }

@@ -13,10 +13,6 @@ class Core {
   }
 
   run = async () => {
-    if (this._config.enabled === false) {
-      return;
-    }
-
     for (const host of this._config.hosts) {
       this.hosts[host.ip] = new Host(
         {
